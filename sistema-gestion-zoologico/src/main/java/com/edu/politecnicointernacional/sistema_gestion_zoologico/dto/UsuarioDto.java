@@ -1,5 +1,8 @@
 package com.edu.politecnicointernacional.sistema_gestion_zoologico.dto;
 
+import com.edu.politecnicointernacional.sistema_gestion_zoologico.entity.enumeradores.Rol;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,4 +29,8 @@ public class UsuarioDto {
 
     @NotNull(message = "El campo activo es obligatorio")
     private Boolean activo;
+
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "El valor no puede ser nulo")
+    private Rol rol;
 }

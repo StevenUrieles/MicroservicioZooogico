@@ -5,105 +5,73 @@ import com.edu.politecnicointernacional.sistema_gestion_zoologico.entity.enumera
 import com.edu.politecnicointernacional.sistema_gestion_zoologico.entity.enumeradores.TipoAnimal;
 import com.edu.politecnicointernacional.sistema_gestion_zoologico.service.AnimalService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/animales")
-public class AnimalController{
+@RequiredArgsConstructor
+public class AnimalController {
 
-    @Autowired
-    private AnimalService service;
+    private final AnimalService service;
 
     @GetMapping
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> listAnimals(){
+    public ResponseEntity<List<AnimalDto>> listarAnimales() {
         return ResponseEntity.ok(service.listarAnimales());
     }
 
-    @GetMapping("especie/{especie}")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> listAnimalsSpecies(@PathVariable String especie){
-        List<AnimalDto> list = service.listarPorEspecie(especie);
-        return ResponseEntity.ok(list);
+    @GetMapping("/especie/{especie}")
+    public ResponseEntity<List<AnimalDto>> listarPorEspecie(@PathVariable String especie) {
+        return ResponseEntity.ok(service.listarPorEspecie(especie));
     }
 
-    @GetMapping("edad/{edad}")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> listAnimalsAge(@PathVariable Integer edad){
-        List<AnimalDto> list = service.listarPorEdad(edad);
-        return ResponseEntity.ok(list);
+    @GetMapping("/edad/{edad}")
+    public ResponseEntity<List<AnimalDto>> listarPorEdad(@PathVariable Integer edad) {
+        return ResponseEntity.ok(service.listarPorEdad(edad));
     }
 
-    @GetMapping("estado/{estado}")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> listAnimalsHealthStatus(@PathVariable EstadoSalud estadoSalud){
-        List<AnimalDto> list = service.listarPorEstado(estadoSalud);
-        return ResponseEntity.ok(list);
+    @GetMapping("/estado/{estado}")
+    public ResponseEntity<List<AnimalDto>> listarPorEstado(@PathVariable EstadoSalud estado) {
+        return ResponseEntity.ok(service.listarPorEstado(estado));
     }
-    @GetMapping("nombre/{nombre}")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> listAnimalsName(@PathVariable String nombre){
-        List<AnimalDto> list = service.listarPorNombre(nombre);
-        return ResponseEntity.ok(list);
+
+    @GetMapping("/nombre/{nombre}")
+    public ResponseEntity<List<AnimalDto>> listarPorNombre(@PathVariable String nombre) {
+        return ResponseEntity.ok(service.listarPorNombre(nombre));
     }
+
+    @GetMapping("/tipo/{tipo}")
+    public ResponseEntity<List<AnimalDto>> listarPorTipo(@PathVariable TipoAnimal tipo) {
+        return ResponseEntity.ok(service.listarPorTipo(tipo));
+    }
+
     @GetMapping("/{id}")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> listAnimalsId(@PathVariable Long id){
-        Optional<AnimalDto> dto = Optional.ofNullable(service.buscarPorId(id));
-        return ResponseEntity.ok(dto);
+    public ResponseEntity<AnimalDto> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(service.buscarPorId(id));
     }
 
-    @GetMapping("tipo/{tipo}")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> listAnimalsType(@PathVariable TipoAnimal tipoAnimal){
-        return ResponseEntity.ok(service.listarPorTipo(tipoAnimal));
-    }
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    @Transactional
-    public ResponseEntity<?> newAnimal(@Valid @RequestBody AnimalDto animalDto, BindingResult result){
-        if(result.hasErrors()){
-            Map<String, String> errores = new HashMap<>();
-            result.getFieldErrors().forEach(err ->{
-                errores.put(err.getField(), "El campo " + err.getDefaultMessage());
-            });
-            return ResponseEntity.badRequest().body(errores);
-        }
-
-        AnimalDto nuevo = service.newAnimal(animalDto);
-        return ResponseEntity.ok(nuevo);
+    public ResponseEntity<AnimalDto> crearAnimal(@Valid @RequestBody AnimalDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.newAnimal(dto));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    @Transactional
-    public ResponseEntity<?> updateAnimal(@Validated @PathVariable Long id, @RequestBody AnimalDto animalDto, BindingResult result){
-        if(result.hasErrors()) {
-            Map<String, String> errores = new HashMap<>();
-
-            result.getFieldErrors().forEach(err -> {
-                errores.put(err.getField(), "El campo " + err.getDefaultMessage());
-            });
-
-            return ResponseEntity.badRequest().body(errores);
-        }
-        AnimalDto modificar = service.updateAnimal(id, animalDto);
-        return ResponseEntity.ok(modificar);
+    public ResponseEntity<AnimalDto> actualizarAnimal(@PathVariable Long id,
+                                                      @Valid @RequestBody AnimalDto dto) {
+        return ResponseEntity.ok(service.updateAnimal(id, dto));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> deleteAnimal(@PathVariable Long id){
+    public ResponseEntity<Void> eliminarAnimal(@PathVariable Long id) {
         service.eliminar(id);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.noContent().build();
     }
 }

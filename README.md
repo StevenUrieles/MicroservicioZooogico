@@ -1,160 +1,222 @@
+<div align="center">
+
 # 🦁 Sistema de Gestión Zoológico
 
-API REST desarrollada con **Spring Boot** para la gestión de animales, alimentación, citas médicas y usuarios de un zoológico.
+**Microservicio RESTful para la gestión integral de un zoológico**  
+Desarrollado con Java 17 · Spring Boot 4 · Spring Security · MySQL
+
+[![Java](https://img.shields.io/badge/Java-17-orange?logo=java)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-brightgreen?logo=springboot)](https://spring.io/projects/spring-boot)
+[![Spring Security](https://img.shields.io/badge/Spring%20Security-6-green?logo=springsecurity)](https://spring.io/projects/spring-security)
+[![MySQL](https://img.shields.io/badge/MySQL-8-blue?logo=mysql)](https://www.mysql.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
+</div>
 
 ---
 
-## 📋 Tabla de Contenidos
+## 📋 Descripción
 
-- [Tecnologías](#-tecnologías)
-- [Arquitectura](#-arquitectura)
-- [Entidades](#-entidades)
-- [Requisitos previos](#-requisitos-previos)
-- [Instalación y ejecución](#-instalación-y-ejecución)
-- [Endpoints](#-endpoints)
-- [Manejo de errores](#-manejo-de-errores)
-- [Ejecución de pruebas](#-ejecución-de-pruebas)
-- [Estructura del proyecto](#-estructura-del-proyecto)
+Sistema de Gestión Zoológico es un microservicio backend que permite administrar los recursos de un zoológico: animales, registros de alimentación, citas médicas y usuarios del sistema. Expone una API REST segura con autenticación basada en roles (ADMIN, VETERINARIO, CUIDADOR).
 
 ---
 
-## 🛠 Tecnologías
+## 🛠️ Tecnologías Utilizadas
 
-| Tecnología | Versión |
+| Tecnología | Versión | Propósito |
+|---|---|---|
+| Java | 17 | Lenguaje principal |
+| Spring Boot | 4.0.3 | Framework base |
+| Spring Web MVC | 4.0.3 | API REST |
+| Spring Security | 6.x | Autenticación y autorización |
+| Spring Data JPA | 4.0.3 | Acceso a datos |
+| Hibernate | 6.x | ORM |
+| MySQL | 8.x | Base de datos relacional |
+| Lombok | Latest | Reducción de boilerplate |
+| Bean Validation | 3.x | Validación de DTOs |
+| JUnit 5 + Mockito | Latest | Pruebas unitarias |
+| Docker | Latest | Contenedorización |
+
+---
+
+## 🏗️ Arquitectura del Proyecto
+
+```
+sistema-gestion-zoologico/
+└── src/
+    ├── main/
+    │   ├── java/com/edu/politecnicointernacional/sistema_gestion_zoologico/
+    │   │   ├── controller/          # Capa de presentación (REST endpoints)
+    │   │   │   ├── AnimalController.java
+    │   │   │   ├── AlimentacionController.java
+    │   │   │   ├── CitaMedicaController.java
+    │   │   │   └── UsuarioController.java
+    │   │   ├── service/             # Interfaces de servicio
+    │   │   │   └── impl/            # Implementaciones de negocio
+    │   │   ├── repository/          # Interfaces JPA Repository
+    │   │   ├── entity/              # Entidades JPA
+    │   │   │   └── enumeradores/    # Enums del dominio
+    │   │   ├── dto/                 # Data Transfer Objects
+    │   │   ├── mapper/              # Conversión Entity ↔ DTO
+    │   │   ├── exception/           # Excepciones personalizadas
+    │   │   │   └── GlobalExceptionHandler.java
+    │   │   └── security/            # Configuración de seguridad
+    │   └── resources/
+    │       └── application.properties
+    └── test/                        # Pruebas unitarias
+```
+
+**Patrón arquitectónico:** `Controller → Service → Repository → Entity`
+
+---
+
+## 📦 Módulos del Sistema
+
+### 🐾 Animal
+Gestiona el catálogo de animales del zoológico. Permite filtrar por nombre, especie, edad, estado de salud y tipo de animal.
+
+### 🍖 Alimentación
+Registra los planes de alimentación por animal. Controla el tipo de comida (CARNES, PLANTAS) y la cantidad en kg.
+
+### 🏥 Cita Médica
+Administra las citas veterinarias. Vincula un animal con un veterinario (usuario), con fecha y estado de la cita (PENDIENTE, ACTIVA, CANCELADA).
+
+### 👤 Usuario
+Gestión de usuarios del sistema con roles diferenciados: ADMIN, VETERINARIO y CUIDADOR.
+
+---
+
+## 🔐 Seguridad
+
+El sistema implementa **Spring Security con HTTP Basic Authentication** y control de acceso basado en roles:
+
+| Rol | Permisos |
 |---|---|
-| Java | 17 |
-| Spring Boot | 3.3.2 |
-| Spring Data JPA | 3.3.2 |
-| Spring Validation | 3.3.2 |
-| MySQL | 8.0 |
-| Lombok | latest |
-| JUnit 5 | latest |
-| Mockito | latest |
-| Maven | 3.9+ |
+| `ADMIN` | Acceso completo a todos los endpoints |
+| `VETERINARIO` | Lectura de animales/alimentación · Gestión completa de citas médicas |
+| `CUIDADOR` | Lectura de animales/alimentación · Crear y actualizar registros de alimentación |
+
+### Matriz de acceso por endpoint
+
+| Endpoint | GET | POST | PUT | DELETE |
+|---|---|---|---|---|
+| `/api/animales` | Todos (auth) | ADMIN | ADMIN | ADMIN |
+| `/api/alimentaciones` | Todos (auth) | ADMIN, CUIDADOR | ADMIN, CUIDADOR | ADMIN |
+| `/api/citas` | ADMIN, VETERINARIO | ADMIN, VETERINARIO | ADMIN, VETERINARIO | ADMIN, VETERINARIO |
+| `/api/usuarios` | ADMIN | ADMIN | ADMIN | ADMIN |
+
+> ⚠️ **Nota:** Para producción se recomienda migrar a JWT/OAuth2. La configuración actual con HTTP Basic es adecuada para entornos internos o demostraciones.
 
 ---
 
-## 🏗 Arquitectura
+## 🚀 Ejecución Local
 
-El proyecto sigue una arquitectura en capas:
+### Prerrequisitos
+- Java 17+
+- Maven 3.8+
+- MySQL 8+
 
-```
-Controller  →  Service (interfaz + impl)  →  Repository  →  Base de datos
-                        ↕
-                     Mapper
-                        ↕
-                      DTO
-```
-
-Cada entidad cuenta con su propio conjunto de clases organizadas por responsabilidad, siguiendo los principios de separación de concerns y bajo acoplamiento.
-
----
-
-## 📦 Entidades
-
-### Animal
-Representa a los animales del zoológico.
-
-| Campo | Tipo | Descripción |
-|---|---|---|
-| `id` | Long | Identificador único |
-| `name` | String | Nombre del animal |
-| `species` | String | Especie |
-| `age` | Integer | Edad (0–100) |
-| `healthStatus` | EstadoSalud | `EXCELENTE`, `MEDIA`, `MALA` |
-| `typeAnimals` | TipoAnimal | `FELINO`, `REPTIL` |
-
-### Alimentacion
-Registro de alimentación asociado a un animal.
-
-| Campo | Tipo | Descripción |
-|---|---|---|
-| `id` | Long | Identificador único |
-| `tipoComida` | TipoComida | `CARNES`, `PLANTAS` |
-| `cantidad` | int | Cantidad en kg (1–100) |
-| `animal` | Animal | Relación ManyToOne |
-
-### CitaMedica
-Cita médica para un animal, asignada a un usuario.
-
-| Campo | Tipo | Descripción |
-|---|---|---|
-| `id` | Long | Identificador único |
-| `fecha` | LocalDate | Fecha (presente o futura) |
-| `estadoCita` | EstadoCita | `PENDIENTE`, `ACTIVA`, `CANCELADA` |
-| `animal` | Animal | Relación ManyToOne |
-| `usuario` | Usuario | Relación ManyToOne |
-
-### Usuario
-Usuarios del sistema (veterinarios, cuidadores, administradores).
-
-| Campo | Tipo | Descripción |
-|---|---|---|
-| `id` | Long | Identificador único |
-| `nombre` | String | Nombre completo |
-| `email` | String | Email único |
-| `password` | String | Contraseña (8–20 caracteres) |
-| `activo` | boolean | Estado del usuario |
-
----
-
-## ✅ Requisitos previos
-
-- [Java 17+](https://adoptium.net/)
-- [Maven 3.9+](https://maven.apache.org/)
-- [MySQL 8.0+](https://www.mysql.com/)
-
----
-
-## 🚀 Instalación y ejecución
-
-**1. Clonar el repositorio:**
+### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/tu-usuario/sistema-gestion-zoologico.git
+git clone https://github.com/tuusuario/sistema-gestion-zoologico.git
 cd sistema-gestion-zoologico
 ```
 
-**2. Crear la base de datos en MySQL:**
+### 2. Configurar la base de datos
 ```sql
 CREATE DATABASE `gestor-zoologico`;
 ```
 
-**3. Configurar credenciales en `src/main/resources/application.properties`:**
+### 3. Configurar `application.properties`
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/gestor-zoologico
+spring.datasource.url=jdbc:mysql://localhost:3306/gestor-zoologico?useSSL=false&serverTimezone=UTC
 spring.datasource.username=root
-spring.datasource.password=tu_password
+spring.datasource.password=tu_contraseña
 ```
 
-**4. Compilar y ejecutar:**
+### 4. Ejecutar
 ```bash
-mvn clean install -DskipTests
-mvn spring-boot:run
+cd sistema-gestion-zoologico
+./mvnw spring-boot:run
 ```
 
-La API quedará disponible en: `http://localhost:8001`
+La aplicación estará disponible en `http://localhost:8002`
 
 ---
 
-## 📡 Endpoints
+## 🐳 Ejecución con Docker
 
-### 🐾 Animales — `/api/animales`
+### Construir la imagen
+```bash
+docker build -t zoo-management:latest .
+```
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api/animales` | Listar todos los animales |
-| `GET` | `/api/animales/{id}` | Buscar animal por ID |
-| `GET` | `/api/animales/nombre/{nombre}` | Buscar por nombre |
-| `GET` | `/api/animales/especie/{especie}` | Filtrar por especie |
-| `GET` | `/api/animales/edad/{edad}` | Filtrar por edad |
-| `GET` | `/api/animales/estado/{estado}` | Filtrar por estado de salud |
-| `GET` | `/api/animales/tipo/{tipo}` | Filtrar por tipo de animal |
-| `POST` | `/api/animales` | Crear nuevo animal |
-| `PUT` | `/api/animales/{id}` | Actualizar animal |
-| `DELETE` | `/api/animales/{id}` | Eliminar animal |
+### Ejecutar el contenedor
+```bash
+docker run -d \
+  --name zoo-management \
+  -p 8002:8002 \
+  -e SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/gestor-zoologico \
+  -e SPRING_DATASOURCE_USERNAME=root \
+  -e SPRING_DATASOURCE_PASSWORD=tu_contraseña \
+  zoo-management:latest
+```
 
-**Ejemplo body POST/PUT:**
-```json
+### Con Docker Compose (recomendado)
+```yaml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8002:8002"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/gestor-zoologico
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpass
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: gestor-zoologico
+    ports:
+      - "3306:3306"
+```
+
+```bash
+docker-compose up -d
+```
+
+---
+
+## 📡 Ejemplos de Endpoints
+
+Todos los endpoints requieren autenticación HTTP Basic.
+
+### Animales
+
+```bash
+# Listar todos los animales
+GET /api/animales
+Authorization: Basic dmV0ZXJpbmFyaW86dmV0MTIzNDU=
+
+# Buscar por ID
+GET /api/animales/1
+
+# Filtrar por especie
+GET /api/animales/especie/Panthera%20leo
+
+# Filtrar por estado de salud (EXCELENTE | MEDIA | MALA)
+GET /api/animales/estado/EXCELENTE
+
+# Crear animal (solo ADMIN)
+POST /api/animales
+Authorization: Basic YWRtaW46YWRtaW4xMjM=
+Content-Type: application/json
+
 {
   "nombre": "Simba",
   "especie": "Panthera leo",
@@ -164,22 +226,16 @@ La API quedará disponible en: `http://localhost:8001`
 }
 ```
 
----
+### Alimentación
 
-### 🍖 Alimentación — `/api/alimentaciones`
+```bash
+# Listar alimentaciones de un animal
+GET /api/alimentaciones/animal/1
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api/alimentaciones` | Listar todas las alimentaciones |
-| `GET` | `/api/alimentaciones/{id}` | Buscar por ID |
-| `GET` | `/api/alimentaciones/tipo/{tipoComida}` | Filtrar por tipo de comida |
-| `GET` | `/api/alimentaciones/animal/{animalId}` | Filtrar por animal |
-| `POST` | `/api/alimentaciones` | Registrar alimentación |
-| `PUT` | `/api/alimentaciones/{id}` | Actualizar alimentación |
-| `DELETE` | `/api/alimentaciones/{id}` | Eliminar alimentación |
+# Crear registro de alimentación (ADMIN o CUIDADOR)
+POST /api/alimentaciones
+Content-Type: application/json
 
-**Ejemplo body POST/PUT:**
-```json
 {
   "tipoComida": "CARNES",
   "cantidad": 15,
@@ -187,185 +243,77 @@ La API quedará disponible en: `http://localhost:8001`
 }
 ```
 
----
+### Citas Médicas
 
-### 🏥 Citas Médicas — `/api/citas`
+```bash
+# Listar citas por estado (PENDIENTE | ACTIVA | CANCELADA)
+GET /api/citas/estado/PENDIENTE
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api/citas` | Listar todas las citas |
-| `GET` | `/api/citas/{id}` | Buscar por ID |
-| `GET` | `/api/citas/estado/{estadoCita}` | Filtrar por estado |
-| `GET` | `/api/citas/animal/{animalId}` | Filtrar por animal |
-| `GET` | `/api/citas/usuario/{usuarioId}` | Filtrar por usuario |
-| `GET` | `/api/citas/fecha/{fecha}` | Filtrar por fecha (`yyyy-MM-dd`) |
-| `POST` | `/api/citas` | Crear nueva cita |
-| `PUT` | `/api/citas/{id}` | Actualizar cita |
-| `DELETE` | `/api/citas/{id}` | Eliminar cita |
+# Listar citas por fecha
+GET /api/citas/fecha/2025-06-15
 
-**Ejemplo body POST/PUT:**
-```json
+# Crear cita médica (ADMIN o VETERINARIO)
+POST /api/citas
+Content-Type: application/json
+
 {
-  "fecha": "2026-03-15",
+  "fecha": "2025-06-20",
   "estadoCita": "PENDIENTE",
   "animalId": 1,
   "usuarioId": 2
 }
 ```
 
----
+### Usuarios (solo ADMIN)
 
-### 👤 Usuarios — `/api/usuarios`
+```bash
+# Crear usuario
+POST /api/usuarios
+Content-Type: application/json
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/api/usuarios` | Listar todos los usuarios |
-| `GET` | `/api/usuarios/{id}` | Buscar por ID |
-| `GET` | `/api/usuarios/email/{email}` | Buscar por email |
-| `GET` | `/api/usuarios/activo/{activo}` | Filtrar por estado activo |
-| `POST` | `/api/usuarios` | Crear nuevo usuario |
-| `PUT` | `/api/usuarios/{id}` | Actualizar usuario |
-| `DELETE` | `/api/usuarios/{id}` | Eliminar usuario |
-
-**Ejemplo body POST/PUT:**
-```json
 {
   "nombre": "Dr. García",
-  "email": "garcia@zoologico.com",
-  "password": "secure123",
-  "activo": true
+  "email": "garcia@zoo.com",
+  "password": "Vet2024!!",
+  "activo": true,
+  "rol": "VETERINARIO"
 }
 ```
 
 ---
 
-## 🔴 Manejo de errores
+## 🧪 Pruebas
 
-La API responde con códigos HTTP estándar. Los errores tienen el siguiente formato:
+El proyecto incluye pruebas unitarias para servicios y mappers usando **JUnit 5 + Mockito**.
 
-```json
-{
-  "error": "Descripción del error"
-}
-```
-
-| Código | Descripción |
-|---|---|
-| `200 OK` | Operación exitosa |
-| `201 Created` | Recurso creado correctamente |
-| `204 No Content` | Eliminación exitosa |
-| `400 Bad Request` | Datos de entrada inválidos |
-| `404 Not Found` | Recurso no encontrado |
-| `409 Conflict` | Conflicto (ej. email duplicado) |
-
----
-
-## 🧪 Ejecución de pruebas
-
-Ejecutar todas las pruebas unitarias:
 ```bash
-mvn test
+# Ejecutar todas las pruebas
+./mvnw test
+
+# Ejecutar con reporte de cobertura
+./mvnw test jacoco:report
 ```
 
-Ejecutar una clase de prueba específica:
-```bash
-mvn test -Dtest=AnimalServiceImplTest
-mvn test -Dtest=UsuarioServiceImplTest
-mvn test -Dtest=CitaMedicaServiceImplTest
-mvn test -Dtest=AlimentacionServiceImplTest
-```
+### Cobertura de pruebas incluida
 
-### Clases de prueba disponibles
-
-| Clase | Descripción |
+| Clase | Tipo |
 |---|---|
-| `AnimalServiceImplTest` | Pruebas del servicio de animales |
-| `AlimentacionServiceImplTest` | Pruebas del servicio de alimentación |
-| `CitaMedicaServiceImplTest` | Pruebas del servicio de citas médicas |
-| `UsuarioServiceImplTest` | Pruebas del servicio de usuarios |
-| `AnimalMapperTest` | Pruebas del mapper de animales |
-| `AlimentacionMapperTest` | Pruebas del mapper de alimentación |
-| `UsuarioMapperTest` | Pruebas del mapper de usuarios |
-
----
-
-## 📁 Estructura del proyecto
-
-```
-sistema-gestion-zoologico/
-├── src/
-│   ├── main/
-│   │   ├── java/com/edu/politecnicointernacional/sistema_gestion_zoologico/
-│   │   │   ├── controller/
-│   │   │   │   ├── AnimalController.java
-│   │   │   │   ├── AlimentacionController.java
-│   │   │   │   ├── CitaMedicaController.java
-│   │   │   │   └── UsuarioController.java
-│   │   │   ├── dto/
-│   │   │   │   ├── AnimalDto.java
-│   │   │   │   ├── AlimentacionDto.java
-│   │   │   │   ├── CitaMedicaDto.java
-│   │   │   │   └── UsuarioDto.java
-│   │   │   ├── entity/
-│   │   │   │   ├── Animal.java
-│   │   │   │   ├── Alimentacion.java
-│   │   │   │   ├── CitaMedica.java
-│   │   │   │   ├── Usuario.java
-│   │   │   │   └── enumeradores/
-│   │   │   │       ├── EstadoCita.java
-│   │   │   │       ├── EstadoSalud.java
-│   │   │   │       ├── Rol.java
-│   │   │   │       ├── TipoAnimal.java
-│   │   │   │       └── TipoComida.java
-│   │   │   ├── exception/
-│   │   │   │   ├── GlobalExceptionHandler.java
-│   │   │   │   ├── AnimalExceptionIsPresent.java
-│   │   │   │   ├── AnimalExceptionNotNull.java
-│   │   │   │   ├── AnimalExceptionValorNoEncontado.java
-│   │   │   │   ├── AlimentacionExceptionNotFound.java
-│   │   │   │   ├── AlimentacionExceptionNotNull.java
-│   │   │   │   ├── CitaMedicaExceptionNotFound.java
-│   │   │   │   ├── CitaMedicaExceptionNotNull.java
-│   │   │   │   ├── UsuarioExceptionEmailDuplicado.java
-│   │   │   │   ├── UsuarioExceptionNotFound.java
-│   │   │   │   └── UsuarioExceptionNotNull.java
-│   │   │   ├── mapper/
-│   │   │   │   ├── AnimalMapper.java
-│   │   │   │   ├── AlimentacionMapper.java
-│   │   │   │   ├── CitaMedicaMapper.java
-│   │   │   │   └── UsuarioMapper.java
-│   │   │   ├── repository/
-│   │   │   │   ├── AnimalRepository.java
-│   │   │   │   ├── AlimentacionRepository.java
-│   │   │   │   ├── CitaMedicaRepository.java
-│   │   │   │   └── UsuarioRepository.java
-│   │   │   ├── service/
-│   │   │   │   ├── AnimalService.java
-│   │   │   │   ├── AlimentacionService.java
-│   │   │   │   ├── CitaMedicaService.java
-│   │   │   │   ├── UsuarioService.java
-│   │   │   │   └── impl/
-│   │   │   │       ├── AnimalServiceImpl.java
-│   │   │   │       ├── AlimentacionServiceImpl.java
-│   │   │   │       ├── CitaMedicaServiceImpl.java
-│   │   │   │       └── UsuarioServiceImpl.java
-│   │   │   └── SistemaGestionZoologicoApplication.java
-│   │   └── resources/
-│   │       └── application.properties
-│   └── test/
-│       └── java/com/edu/politecnicointernacional/sistema_gestion_zoologico/
-│           ├── AnimalServiceImplTest.java
-│           ├── AlimentacionServiceImplTest.java
-│           ├── CitaMedicaServiceImplTest.java
-│           ├── UsuarioServiceImplTest.java
-│           ├── AnimalMapperTest.java
-│           ├── AlimentacionMapperTest.java
-│           └── UsuarioMapperTest.java
-└── pom.xml
-```
+| `AnimalServiceImplTest` | Servicio |
+| `AlimentacionServiceImplTest` | Servicio |
+| `CitaMedicaServiceImplTest` | Servicio |
+| `UsuarioServiceImplTest` | Servicio |
+| `AnimalMapperTest` | Mapper |
+| `AlimentacionMapperTest` | Mapper |
+| `UsuarioMapperTest` | Mapper |
 
 ---
 
 ## 👨‍💻 Autor
 
-Desarrollado en el **Politécnico Internacional** como proyecto de gestión zoológica.
+Desarrollado como proyecto académico en el **Politécnico Internacional**.
+
+---
+
+<div align="center">
+  <sub>Sistema de Gestión Zoológico · Spring Boot Microservice · 2025</sub>
+</div>

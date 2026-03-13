@@ -1,5 +1,6 @@
 package com.edu.politecnicointernacional.sistema_gestion_zoologico.entity;
 
+import com.edu.politecnicointernacional.sistema_gestion_zoologico.entity.enumeradores.Rol;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -35,6 +36,11 @@ public class Usuario {
 
     @NotNull(message = "Este campo es obligatorio")
     private boolean activo;
+
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "El valor no puede ser nulo")
+    private Rol rol;
+
 
     @OneToMany(mappedBy = "usuario")
     private List<CitaMedica> citasMedicas;

@@ -4,73 +4,57 @@ import com.edu.politecnicointernacional.sistema_gestion_zoologico.dto.Alimentaci
 import com.edu.politecnicointernacional.sistema_gestion_zoologico.entity.enumeradores.TipoComida;
 import com.edu.politecnicointernacional.sistema_gestion_zoologico.service.AlimentacionService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.BindingResult;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import java.util.HashMap;
-import java.util.Map;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/alimentaciones")
+@RequiredArgsConstructor
 public class AlimentacionController {
 
-    @Autowired
-    private AlimentacionService service;
+    private final AlimentacionService service;
 
     @GetMapping
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> listarAlimentaciones() {
+    public ResponseEntity<List<AlimentacionDto>> listarAlimentaciones() {
         return ResponseEntity.ok(service.listarAlimentaciones());
     }
 
     @GetMapping("/tipo/{tipoComida}")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> listarPorTipo(@PathVariable TipoComida tipoComida) {
+    public ResponseEntity<List<AlimentacionDto>> listarPorTipo(@PathVariable TipoComida tipoComida) {
         return ResponseEntity.ok(service.listarPorTipoComida(tipoComida));
     }
 
     @GetMapping("/animal/{animalId}")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> listarPorAnimal(@PathVariable Long animalId) {
+    public ResponseEntity<List<AlimentacionDto>> listarPorAnimal(@PathVariable Long animalId) {
         return ResponseEntity.ok(service.listarPorAnimal(animalId));
     }
 
     @GetMapping("/{id}")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<AlimentacionDto> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(service.buscarPorId(id));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUIDADOR')")
     @PostMapping
-    @Transactional
-    public ResponseEntity<?> crearAlimentacion(@Valid @RequestBody AlimentacionDto dto, BindingResult result) {
-        if (result.hasErrors()) {
-            Map<String, String> errores = new HashMap<>();
-            result.getFieldErrors().forEach(err ->
-                    errores.put(err.getField(), "El campo " + err.getDefaultMessage()));
-            return ResponseEntity.badRequest().body(errores);
-        }
+    public ResponseEntity<AlimentacionDto> crearAlimentacion(@Valid @RequestBody AlimentacionDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.crearAlimentacion(dto));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUIDADOR')")
     @PutMapping("/{id}")
-    @Transactional
-    public ResponseEntity<?> actualizarAlimentacion(@PathVariable Long id, @Valid @RequestBody AlimentacionDto dto, BindingResult result) {
-        if (result.hasErrors()) {
-            Map<String, String> errores = new HashMap<>();
-            result.getFieldErrors().forEach(err ->
-                    errores.put(err.getField(), "El campo " + err.getDefaultMessage()));
-            return ResponseEntity.badRequest().body(errores);
-        }
+    public ResponseEntity<AlimentacionDto> actualizarAlimentacion(@PathVariable Long id,
+                                                                  @Valid @RequestBody AlimentacionDto dto) {
         return ResponseEntity.ok(service.actualizarAlimentacion(id, dto));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    @Transactional
-    public ResponseEntity<?> eliminar(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);
         return ResponseEntity.noContent().build();
     }

@@ -15,6 +15,7 @@ public class UsuarioMapper {
         dto.setEmail(usuario.getEmail());
         dto.setPassword(usuario.getPassword());
         dto.setActivo(usuario.isActivo());
+        dto.setRol(usuario.getRol());
         return dto;
     }
 
@@ -26,6 +27,7 @@ public class UsuarioMapper {
         usuario.setEmail(dto.getEmail());
         usuario.setPassword(dto.getPassword());
         usuario.setActivo(dto.getActivo());
+        usuario.setRol(dto.getRol());
         return usuario;
     }
 
@@ -35,5 +37,6 @@ public class UsuarioMapper {
         usuario.setEmail(dto.getEmail());
         usuario.setPassword(dto.getPassword());
         usuario.setActivo(dto.getActivo());
+        usuario.setRol(dto.getRol());
     }
 }
